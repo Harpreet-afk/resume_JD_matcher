@@ -2,6 +2,7 @@
 data/raw/
 data/postings
 
+
 # Model artifacts
 .npy
 .index
@@ -20,3 +21,7 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# generated embeddings
+data/*.npy
+data/*.index
