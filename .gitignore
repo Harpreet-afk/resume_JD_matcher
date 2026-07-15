@@ -1,0 +1,25 @@
+# Data (too large for Git)
+data/.csv
+data/.parquet
+data/.pdf
+data/resumes/
+data/job_postings/
+
+# Model artifacts
+.npy
+.index
+.pkl
+.bin
+
+# Environment
+venv/
+.env
+__pycache__/
+.pyc
+
+# Notebooks
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
