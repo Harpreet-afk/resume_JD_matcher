@@ -1,9 +1,6 @@
 # Data (too large for Git)
-data/.csv
-data/.parquet
-data/.pdf
-data/resumes/
-data/job_postings/
+data/raw/
+data/postings
 
 # Model artifacts
 .npy
