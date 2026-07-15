@@ -1,7 +1,17 @@
 import numpy as np
 import pandas as pd
 
-from src.evaluate import evaluate_retrieval_baseline, precision_at_k, recall_at_k
+from src.evaluate import (
+    evaluate_retrieval_baseline,
+    precision_at_k,
+    recall_at_k,
+    dcg_at_k,
+    ndcg_at_k,
+    mrr,
+    precision_at_k_relevances,
+    recall_at_k_relevances,
+    full_evaluation,
+)
 
 
 def test_precision_and_recall_at_k():
@@ -36,3 +46,15 @@ def test_evaluate_retrieval_baseline_works_with_synthetic_data():
     assert results.iloc[0]["jd_id"] == 10
     assert results.iloc[0]["precision_at_k"] >= 0.0
     assert results.iloc[0]["recall_at_k"] >= 0.0
+
+
+def test_ir_metric_helpers():
+    assert np.isclose(dcg_at_k([3, 2, 1], 3), (2**3 - 1) / np.log2(2) + (2**2 - 1) / np.log2(3) + (2**1 - 1) / np.log2(4))
+    assert np.isclose(ndcg_at_k([3, 2, 1], 3), 1.0)
+    assert np.isclose(mrr([[0, 0, 1], [1, 0, 0]]), (1/3 + 1.0) / 2)
+    assert np.isclose(precision_at_k_relevances([1, 0, 1], 2), 0.5)
+    assert np.isclose(recall_at_k_relevances([1, 0, 1], 2, total_relevant=2), 0.5)
+    summary = full_evaluation([[1, 0, 0], [0, 1, 1]], ks=[1, 2])
+    assert summary["nDCG@1"] >= 0.0
+    assert summary["P@1"] >= 0.0
+    assert summary["MRR"] >= 0.0

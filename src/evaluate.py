@@ -1,13 +1,73 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
 
 from src.config import synthesize_labels
 from src.retrieval import search
+
+
+def dcg_at_k(relevances: List[int], k: int) -> float:
+    """Compute DCG@k."""
+    relevances = np.asarray(relevances[:k], dtype=float)
+    if relevances.size == 0:
+        return 0.0
+    positions = np.arange(1, relevances.size + 1, dtype=float)
+    return float(np.sum((2**relevances - 1) / np.log2(positions + 1)))
+
+
+def ndcg_at_k(relevances: List[int], k: int) -> float:
+    """Compute nDCG@k."""
+    actual = dcg_at_k(relevances, k)
+    ideal = dcg_at_k(sorted(relevances, reverse=True), k)
+    return float(actual / ideal) if ideal > 0 else 0.0
+
+
+def mrr(ranked_relevances: List[List[int]]) -> float:
+    """Compute Mean Reciprocal Rank across queries."""
+    if not ranked_relevances:
+        return 0.0
+    rrs = []
+    for rels in ranked_relevances:
+        rr = 0.0
+        for i, r in enumerate(rels):
+            if r > 0:
+                rr = 1.0 / (i + 1)
+                break
+        rrs.append(rr)
+    return float(np.mean(rrs))
+
+
+def precision_at_k_relevances(relevances: List[int], k: int) -> float:
+    """Compute Precision@k from relevance labels."""
+    if k <= 0:
+        return 0.0
+    return float(sum(1 for r in relevances[:k] if r > 0) / k)
+
+
+def recall_at_k_relevances(relevances: List[int], k: int, total_relevant: int) -> float:
+    """Compute Recall@k from relevance labels."""
+    if total_relevant <= 0:
+        return 0.0
+    return float(sum(1 for r in relevances[:k] if r > 0) / total_relevant)
+
+
+def full_evaluation(
+    all_relevances: List[List[int]],
+    ks: List[int] = [5, 10, 20]
+) -> dict:
+    """Run a full evaluation suite across multiple queries and cutoffs."""
+    results = {}
+    for k in ks:
+        ndcgs = [ndcg_at_k(r, k) for r in all_relevances]
+        precisions = [precision_at_k_relevances(r, k) for r in all_relevances]
+        results[f"nDCG@{k}"] = float(np.mean(ndcgs))
+        results[f"P@{k}"] = float(np.mean(precisions))
+    results["MRR"] = float(mrr(all_relevances))
+    return results
 
 
 def precision_at_k(retrieved_ids: Sequence[object], relevant_ids: Iterable[object], k: int) -> float:
